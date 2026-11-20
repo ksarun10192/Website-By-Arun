@@ -296,7 +296,7 @@
       display: flex;
       align-items: center;
       gap: 0.8em;
-      padding: 6px 15px 6px 0;
+      padding: 15px 15px 6px 0;
       border: 0;
       background: none;
       color: #fff;
@@ -1704,6 +1704,29 @@
         console.error('Tubes background failed to load:', err);
       }
     }
+  </script>
+  <script>
+    (() => {
+      const cursor = document.getElementById('contrastCursor');
+      if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+      document.addEventListener('pointermove', e => {
+        if (e.pointerType === 'touch') {
+          cursor.classList.remove('visible');
+          return;
+        }
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+        const target = e.target instanceof Element ? e.target : null;
+        cursor.classList.toggle('is-grab', !!target?.closest('.works-track'));
+        cursor.classList.toggle('is-dragging', !!target?.closest('.works-track.is-dragging'));
+        cursor.classList.add('visible');
+      });
+
+      document.addEventListener('pointerout', e => {
+        if (!e.relatedTarget) cursor.classList.remove('visible');
+      });
+    })();
   </script>
 </body>
 </html>
