@@ -135,7 +135,7 @@
       animation: navIn 0.9s var(--ease) both;
     }
     .nav-inner {
-      padding: clamp(24px, 3vw, 80px) var(--gutter) 0;
+      padding: clamp(24px, 3vw, 80px) calc(var(--gutter) + 15px) 0 var(--gutter);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -258,11 +258,11 @@
     .menu-links .num-in { transition-property: transform, opacity; }
     .menu-links a:hover .num-in { opacity: 0.6; }
 
-        /* ---------- Sound on/off button (bottom left, every section) ---------- */
+        /* ---------- Sound on/off button (top right, every section) ---------- */
     .sound-btn {
       position: fixed;
       top: calc(clamp(24px, 3vw, 80px) + 12px);
-      right: calc(var(--gutter) + clamp(32px, 2.8vw, 72px) + 16px);
+      right: calc(var(--gutter) + clamp(32px, 2.8vw, 72px) + 30px);
       transform: translateY(-50%);
       z-index: 30;
       display: flex;
@@ -848,7 +848,7 @@
 
     /* ---------- Phone layout ---------- */
     @media (max-width: 720px) {
-      .nav-inner { padding: 24px 16px 0; }
+      .nav-inner { padding: 24px 31px 0 16px; }
       .logo svg { height: 24px; }
       .menu-btn { width: 32px; }
       .menu-inner { padding: 0 16px; }
@@ -986,9 +986,9 @@
     </div>
   </div>
 
-  <button class="sound-btn on" id="soundBtn" type="button" aria-pressed="true" aria-label="Turn music off">
+  <button class="sound-btn" id="soundBtn" type="button" aria-pressed="false" aria-label="Turn music on">
     <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-    <span class="sound-label">Sound on</span>
+    <span class="sound-label">Sound off</span>
   </button>
 
   <main id="top">
@@ -1188,7 +1188,7 @@
     // ---------- Ambient music (made live in the browser, no audio file) ----------
     // A slow, spacey pad that drifts through four chords, a low drone underneath,
     // and soft 8-bit "pixel" sparkles that echo into a long reverb.
-    // Browsers only allow sound after a click, so it starts muted until the button is pressed.
+    // Starts after the loading screen, or on the first click/key if the browser requires one.
     (() => {
       const btn = document.getElementById('soundBtn');
       const label = btn.querySelector('.sound-label');
@@ -1204,10 +1204,7 @@
       ];
       const sparkleNotes = [81, 84, 86, 88, 91, 93, 96];   // A minor pentatonic, high
       let ctx, master, bus, padFilter, echo, running = false;
-      let on = (() => {
-        try { return localStorage.getItem('portfolio-sound') !== 'off'; }
-        catch (_) { return true; }
-      })();
+      let on = false;
       let chordTimer, sparkleTimer, chordIndex = 0, current = null;
 
       const syncButton = () => {
@@ -1337,22 +1334,9 @@
 
       btn.addEventListener('click', () => {
         on = !on;
-        try { localStorage.setItem('portfolio-sound', on ? 'on' : 'off'); }
-        catch (_) {}
         syncButton();
         on ? start() : stop();
       });
-
-      // Browsers require a first user gesture before Web Audio can play.
-      // Keep the control in the on state and unlock playback after that gesture.
-      const unlockAudio = () => {
-        if (!on) return;
-        start();
-        document.removeEventListener('pointerdown', unlockAudio);
-        document.removeEventListener('keydown', unlockAudio);
-      };
-      document.addEventListener('pointerdown', unlockAudio, { once: true });
-      document.addEventListener('keydown', unlockAudio, { once: true });
 
       // Pause while the tab is in the background, pick up again when you come back
       document.addEventListener('visibilitychange', () => {
