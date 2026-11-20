@@ -258,7 +258,7 @@
     .menu-links .num-in { transition-property: transform, opacity; }
     .menu-links a:hover .num-in { opacity: 0.6; }
 
-        /* ---------- Sound on/off button (top right, every section) ---------- */
+    /* ---------- Music on/off button (top right, every section) ---------- */
     .sound-btn {
       position: fixed;
       top: calc(clamp(24px, 3vw, 80px) + 12px);
@@ -268,7 +268,7 @@
       display: flex;
       align-items: center;
       gap: 0.8em;
-      padding: 6px 0;
+      padding: 6px 15px 6px 0;
       border: 0;
       background: none;
       color: #fff;
@@ -282,25 +282,10 @@
     html.is-loading .sound-btn { animation-play-state: paused; }
     .sound-btn .sound-label { opacity: 0.7; transition: opacity 0.3s var(--ease); }
     .sound-btn:hover .sound-label { opacity: 1; }
-    /* Four little equaliser bars: flat when muted, dancing when playing */
-    .sound-btn .eq {
-      display: flex;
-      align-items: flex-end;
-      gap: 2px;
-      height: 1.2em;
-    }
-    .sound-btn .eq i {
-      display: block;
-      width: 2px;
-      height: 3px;
-      background: currentColor;
-      transition: height 0.3s var(--ease);
-    }
-    .sound-btn.on .eq i { animation: eqBar 1s ease-in-out infinite alternate; }
-    .sound-btn.on .eq i:nth-child(2) { animation-duration: 0.7s; }
-    .sound-btn.on .eq i:nth-child(3) { animation-duration: 1.2s; }
-    .sound-btn.on .eq i:nth-child(4) { animation-duration: 0.85s; }
-    @keyframes eqBar { from { height: 3px; } to { height: 100%; } }
+    .sound-btn .music-icon { width: 18px; height: 18px; flex: none; }
+    .sound-btn .music-waves { display: none; }
+    .sound-btn.on .music-muted { display: none; }
+    .sound-btn.on .music-waves { display: block; }
 
     /* ---------- Hero ---------- */
     .hero {
@@ -987,8 +972,12 @@
   </div>
 
   <button class="sound-btn" id="soundBtn" type="button" aria-pressed="false" aria-label="Turn music on">
-    <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-    <span class="sound-label">Sound off</span>
+    <svg class="music-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 9v6h4l5 4V5L8 9H4Z" fill="currentColor"/>
+      <path class="music-waves" d="M16 9a5 5 0 0 1 0 6m2.5-8.5a8.5 8.5 0 0 1 0 11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      <path class="music-muted" d="m16 9 5 6m0-6-5 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    </svg>
+    <span class="sound-label">Music off</span>
   </button>
 
   <main id="top">
@@ -1211,7 +1200,7 @@
         btn.classList.toggle('on', on);
         btn.setAttribute('aria-pressed', on);
         btn.setAttribute('aria-label', on ? 'Turn music off' : 'Turn music on');
-        label.textContent = on ? 'Sound on' : 'Sound off';
+        label.textContent = on ? 'Music on' : 'Music off';
       };
       syncButton();
 
