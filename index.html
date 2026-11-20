@@ -261,8 +261,9 @@
         /* ---------- Sound on/off button (bottom left, every section) ---------- */
     .sound-btn {
       position: fixed;
-      left: var(--gutter);
-      bottom: clamp(20px, 2.2vw, 60px);
+      top: calc(clamp(24px, 3vw, 80px) + clamp(24px, 2.15vw, 60px) / 2);
+      right: calc(var(--gutter) + clamp(32px, 2.8vw, 72px) + clamp(20px, 2vw, 56px));
+      transform: translateY(-50%);
       z-index: 30;
       display: flex;
       align-items: center;
@@ -470,12 +471,10 @@
 
     .hint {
       position: absolute;
-      /* Top right, vertically centred with the menu icon, just to its left */
-      top: calc(clamp(24px, 3vw, 80px) + clamp(24px, 2.15vw, 60px) / 2);
-      right: calc(var(--gutter) + clamp(32px, 2.8vw, 72px) + clamp(20px, 2vw, 56px));
-      transform: translateY(-50%);
+      left: var(--gutter);
+      bottom: clamp(20px, 2.2vw, 60px);
       z-index: 1;
-      text-align: right;
+      text-align: left;
       white-space: nowrap;
       font-size: clamp(11px, 0.76vw, 22px);
       letter-spacing: 0.18em;
@@ -959,6 +958,7 @@
         finished = true;
         loader.classList.add('done');
         root.classList.remove('is-loading');           // hero animations start as it lifts
+        window.dispatchEvent(new Event('site-loaded'));
         setTimeout(() => loader.remove(), 1200);
       };
       const tick = now => {
@@ -987,9 +987,9 @@
     </div>
   </div>
 
-  <button class="sound-btn" id="soundBtn" type="button" aria-pressed="false" aria-label="Turn music on">
+  <button class="sound-btn on" id="soundBtn" type="button" aria-pressed="true" aria-label="Turn music off">
     <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-    <span class="sound-label">Sound off</span>
+    <span class="sound-label">Sound on</span>
   </button>
 
   <main id="top">
@@ -1204,8 +1204,20 @@
         [55, 59, 62, 66, 69],   // G (add 9)
       ];
       const sparkleNotes = [81, 84, 86, 88, 91, 93, 96];   // A minor pentatonic, high
-      let ctx, master, bus, padFilter, echo, on = false, running = false;
+      let ctx, master, bus, padFilter, echo, running = false;
+      let on = (() => {
+        try { return localStorage.getItem('portfolio-sound') !== 'off'; }
+        catch (_) { return true; }
+      })();
       let chordTimer, sparkleTimer, chordIndex = 0, current = null;
+
+      const syncButton = () => {
+        btn.classList.toggle('on', on);
+        btn.setAttribute('aria-pressed', on);
+        btn.setAttribute('aria-label', on ? 'Turn music off' : 'Turn music on');
+        label.textContent = on ? 'Sound on' : 'Sound off';
+      };
+      syncButton();
 
       const reverbImpulse = (seconds, decay) => {
         const len = Math.floor(ctx.sampleRate * seconds);
@@ -1326,12 +1338,25 @@
 
       btn.addEventListener('click', () => {
         on = !on;
-        btn.classList.toggle('on', on);
-        btn.setAttribute('aria-pressed', on);
-        btn.setAttribute('aria-label', on ? 'Turn music off' : 'Turn music on');
-        label.textContent = on ? 'Sound on' : 'Sound off';
+        try { localStorage.setItem('portfolio-sound', on ? 'on' : 'off'); }
+        catch (_) {}
+        syncButton();
         on ? start() : stop();
       });
+
+      // Browsers require a first user gesture before Web Audio can play.
+      // Keep the control in the on state and unlock playback after that gesture.
+      const unlockAudio = () => {
+        if (!on) return;
+        start();
+        document.removeEventListener('pointerdown', unlockAudio);
+        document.removeEventListener('keydown', unlockAudio);
+      };
+      document.addEventListener('pointerdown', unlockAudio, { once: true });
+      document.addEventListener('keydown', unlockAudio, { once: true });
+      window.addEventListener('site-loaded', () => {
+        if (on) start();
+      }, { once: true });
 
       // Pause while the tab is in the background, pick up again when you come back
       document.addEventListener('visibilitychange', () => {
