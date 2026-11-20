@@ -261,8 +261,8 @@
         /* ---------- Sound on/off button (bottom left, every section) ---------- */
     .sound-btn {
       position: fixed;
-      top: calc(clamp(24px, 3vw, 80px) + clamp(24px, 2.15vw, 60px) / 2);
-      right: calc(var(--gutter) + clamp(32px, 2.8vw, 72px) + clamp(20px, 2vw, 56px));
+      top: calc(clamp(24px, 3vw, 80px) + 12px);
+      right: calc(var(--gutter) + clamp(32px, 2.8vw, 72px) + 16px);
       transform: translateY(-50%);
       z-index: 30;
       display: flex;
@@ -958,7 +958,6 @@
         finished = true;
         loader.classList.add('done');
         root.classList.remove('is-loading');           // hero animations start as it lifts
-        window.dispatchEvent(new Event('site-loaded'));
         setTimeout(() => loader.remove(), 1200);
       };
       const tick = now => {
@@ -1354,9 +1353,6 @@
       };
       document.addEventListener('pointerdown', unlockAudio, { once: true });
       document.addEventListener('keydown', unlockAudio, { once: true });
-      window.addEventListener('site-loaded', () => {
-        if (on) start();
-      }, { once: true });
 
       // Pause while the tab is in the background, pick up again when you come back
       document.addEventListener('visibilitychange', () => {
