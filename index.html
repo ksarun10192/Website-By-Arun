@@ -667,7 +667,12 @@
       width: max-content;
       transform: translate3d(var(--x, 0px), 0, 0);
       will-change: transform;
+      cursor: grab;
     }
+    .works-track a { cursor: inherit; }
+    .works-track.is-dragging,
+    .works-track.is-dragging a { cursor: grabbing; }
+    .works-track.is-dragging { user-select: none; }
     /* Outer card: scroll-driven entrance. Inner: hover motion. */
     .work-card {
       flex: none;
@@ -1447,6 +1452,7 @@
 
       // Sideways scroll while the section is pinned
       let travel = 0, startX = 0, x = null, enter = 1, ticking = false;
+      let drag = null, previousScrollBehavior = '', suppressClick = false;
       const measure = () => {
         if (phone.matches) { works.style.removeProperty('--travel'); travel = 0; return; }
         const vw = window.innerWidth;
@@ -1461,7 +1467,7 @@
         const p = travel ? Math.min(1, Math.max(0, -top / travel)) : 1;
         const targetX = startX - p * travel;
         const targetEnter = Math.min(1, Math.max(0, 1 - top / window.innerHeight));  // 0 → 1 as the section arrives
-        if (x === null || calm) { x = targetX; enter = targetEnter; }
+        if (x === null || calm || drag?.active) { x = targetX; enter = targetEnter; }
         x += (targetX - x) * 0.12;
         enter += (targetEnter - enter) * 0.12;
         track.style.setProperty('--x', x.toFixed(1) + 'px');
@@ -1470,6 +1476,51 @@
         else ticking = false;
       };
       const kick = () => { if (!ticking) { ticking = true; requestAnimationFrame(step); } };
+      track.addEventListener('click', e => {
+        if (!suppressClick) return;
+        e.preventDefault();
+        e.stopPropagation();
+      }, true);
+      track.addEventListener('dragstart', e => e.preventDefault());
+      track.addEventListener('pointerdown', e => {
+        if (phone.matches || e.pointerType !== 'mouse' || e.button !== 0) return;
+        drag = {
+          pointerId: e.pointerId,
+          startX: e.clientX,
+          startScroll: window.scrollY,
+          active: false
+        };
+      });
+      window.addEventListener('pointermove', e => {
+        if (!drag || e.pointerId !== drag.pointerId) return;
+        const deltaX = e.clientX - drag.startX;
+        if (!drag.active && Math.abs(deltaX) < 5) return;
+        if (!drag.active) {
+          drag.active = true;
+          previousScrollBehavior = document.documentElement.style.scrollBehavior;
+          document.documentElement.style.scrollBehavior = 'auto';
+          track.classList.add('is-dragging');
+          track.setPointerCapture(e.pointerId);
+        }
+        e.preventDefault();
+        const worksTop = window.scrollY + works.getBoundingClientRect().top;
+        const scroll = Math.min(worksTop + travel, Math.max(worksTop, drag.startScroll - deltaX));
+        window.scrollTo(0, scroll);
+      }, { passive: false });
+      const endDrag = e => {
+        if (!drag || e.pointerId !== drag.pointerId) return;
+        if (drag.active) {
+          track.classList.remove('is-dragging');
+          document.documentElement.style.scrollBehavior = previousScrollBehavior;
+          if (e.type === 'pointerup') {
+            suppressClick = true;
+            setTimeout(() => { suppressClick = false; }, 0);
+          }
+        }
+        drag = null;
+      };
+      window.addEventListener('pointerup', endDrag);
+      window.addEventListener('pointercancel', endDrag);
       measure(); kick();
       window.addEventListener('scroll', kick, { passive: true });
       window.addEventListener('resize', () => { measure(); kick(); });
